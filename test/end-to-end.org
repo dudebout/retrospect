@@ -1,0 +1,37 @@
+* level 1
+** level 1A
+:PROPERTIES:
+:bucket:   a
+:END:
+:LOGBOOK:
+CLOCK: [2018-12-29 Sat 13:01]--[2018-12-29 Sat 13:02] =>  0:01
+:END:
+** level 1B
+:PROPERTIES:
+:bucket:   c
+:END:
+:LOGBOOK:
+CLOCK: [2018-12-29 Sat 13:05]--[2018-12-29 Sat 13:06] =>  0:01
+:END:
+* level 2
+** level 2A
+:PROPERTIES:
+:bucket:   c
+:END:
+:LOGBOOK:
+CLOCK: [2018-12-29 Sat 13:03]--[2018-12-29 Sat 13:04] =>  0:01
+:END:
+*** level 2Aa
+:PROPERTIES:
+:bucket:   b
+:END:
+:LOGBOOK:
+CLOCK: [2018-12-29 Sat 13:03]--[2018-12-29 Sat 13:04] =>  0:01
+:END:
+** level 2B
+:PROPERTIES:
+:bucket:   b
+:END:
+:LOGBOOK:
+CLOCK: [2018-12-29 Sat 13:04]--[2018-12-29 Sat 13:05] =>  0:01
+:END:
