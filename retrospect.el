@@ -5,7 +5,7 @@
 ;; Author: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Maintainer: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Created: 23 Feb 2018
-;; Modified: 22 Jul 2019
+;; Modified: 05 Aug 2019
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "26.1") (org "9.2"))
 ;; Keywords: org-mode retrospective time-management
