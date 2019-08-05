@@ -35,7 +35,7 @@ Org link navigation key bindings:
 Use the following snippet to get started with your own data:
 
 ```elisp
-(setq retrospect-source-filename "path-to-org-file"
+(setq retrospect-source-filename "PATH_TO_ORG_FILE"
       retrospect-buckets
         '(:names
           ((sole-bucket . "Sole Bucket"))
