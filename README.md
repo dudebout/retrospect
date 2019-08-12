@@ -8,12 +8,12 @@ buffer.
 
 # See `retrospect` in action
 
-The easiest way to see `retrospect` in action is to run `make run` from the root
-of this repository. This demo uses buckets defined in
+The easiest way to see `retrospect` in action is to run `make demo` from the
+root of this repository. This demo uses buckets defined in
 [`retrospect-tests.el`](retrospect-tests.el) to analyze the file
-[`end-to-end.org`](test/end-to-end.org) and display the content of
-[`end-to-end.golden`](test/end-to-end.golden). This output is part of the
-repository because it is used in automated tests run via `make test`.
+[`input.org`](test/input.org) and display the content of
+[`demo.golden`](test/demo.golden). This output is part of the repository because
+it is used in automated tests run via `make test`.
 
 The output is displayed in the `*retrospect*` buffer. This buffer uses
 `org-mode` as its major mode with `retrospect-mode` minor mode enabled. The
@@ -57,5 +57,5 @@ Buckets form a partition of the org entries in the input file, i.e., each entry
 is in one and only one bucket. Entries are prevented from being put in multiple
 buckets to avoid counting time spent multiple times.
 
-Only the buckets listed under `retrospect-buckets`'s `:names` entry are
+Only the buckets listed under `retrospect-buckets`'s `:names` property are
 displayed in the `*retrospect*` buffer.

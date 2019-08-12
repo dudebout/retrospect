@@ -2,25 +2,16 @@
 all: test
 
 .PHONY: test
-test: end-to-end-test readme-test
+test: ert-test readme-test
 
 # ------------------------------------------------------------------------------
-# end-to-end testing
-#
-# Running `make end-to-end-run` should bring up the *retrospect* buffer with
-# three filled up buckets.
+# Unit testing
 # ------------------------------------------------------------------------------
-.PHONY: end-to-end-test
-end-to-end-test:
+.PHONY: ert-test
+ert-test:
 	@emacs -Q --batch -L . --eval "(progn\
 	(load-file \"retrospect-tests.el\")\
 	(ert-run-tests-batch-and-exit))"
-
-.PHONY: end-to-end-run
-end-to-end-run:
-	@emacs -Q -L . --eval "(progn\
-	(load-file \"retrospect-tests.el\")\
-	(run-interactive \"end-to-end\" end-to-end-buckets))"
 
 # ------------------------------------------------------------------------------
 # README snippets testing
@@ -49,10 +40,22 @@ readme-run: $(readme_el)
 # Extract the only elisp snippet, and point at an existing input file.
 $(readme_el):  README.md
 	@ sed -n '/^```elisp$$/,/^```$$/p;/^```$$/q' $< \
-	| sed 's#PATH_TO_ORG_FILE#test/end-to-end.org#' \
+	| sed 's#PATH_TO_ORG_FILE#test/input.org#' \
 	| sed '1d;$$d' \
 	> $@
 
 .PHONY: clean
 clean:
 	rm -f $(readme_el)
+
+# ------------------------------------------------------------------------------
+# Demo
+#
+# Running `make demo` should bring up the *retrospect* buffer with three filled
+# up buckets.
+# ------------------------------------------------------------------------------
+.PHONY: demo
+demo:
+	@emacs -Q -L . --eval "(progn\
+	(load-file \"retrospect-tests.el\")\
+	(run-interactive \"input\" demo-buckets))"
