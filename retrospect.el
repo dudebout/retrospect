@@ -53,12 +53,10 @@ Each bucket is identified by a symbol.
 identifying buckets and cdr their human-friendly names, used in
 the *retrospect* buffer.
 
-`:classifiers' is a list of cons cells whose car are predicates
-and cdr are bucket-identifying symbols.  If the predicate in a
-cons cell return t when run on an org entry, that org entry is
-part of the associated bucket."
+`:classifier' is a function which returns the bucket-identifying
+symbol for the org entry at point."
   :type '(plist :options ((:names (repeat (cons symbol string)))
-                          (:classifiers (repeat (cons function symbol)))))
+                          (:classifier function)))
   :group 'retrospect)
 
 (defcustom retrospect-bucket-property-name "bucket"
@@ -89,9 +87,10 @@ Interning the value provides a bucket-identifying symbol."
 The results are stored as text properties on the input file."
   (with-silent-modifications
     (remove-text-properties (point-min) (point-max) '(:retrospect-clock-minutes t)))
-  (dolist (classifier (plist-get retrospect-buckets :classifiers))
-    (let ((pred (car classifier))
-          (bucket (cdr classifier)))
+  (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
+    (let* ((classifier (plist-get retrospect-buckets :classifier))
+           (pred (lambda ()
+ (equal (funcall classifier) bucket))))
       ;; actual computation
       (org-clock-sum tstart tend pred)
       (with-silent-modifications
@@ -117,31 +116,30 @@ The results are stored as text properties on the input file."
 
 (defun retrospect--insert-buckets-content ()
   "Insert each org entry with its duration under its containing bucket."
-  (dolist (classifier (plist-get retrospect-buckets :classifiers))
-    (let ((bucket (cdr classifier)))
-      (insert (format "|-|\n|%s|\n|-|\n" (alist-get bucket (plist-get retrospect-buckets :names))))
-      (with-current-buffer (find-file-noselect retrospect-source-filename)
-        (save-excursion
-          (goto-char (point-min))
-          (while
-              (progn
-                (let ((level (org-current-level))
-                      (heading
-                       (if retrospect-insert-org-links
-                           (org-store-link nil)
-                         (org-element-property :raw-value (org-element-at-point))))
-                      (minutes (plist-get (get-text-property (point) :retrospect-clock-minutes) bucket)))
-                  (when minutes
-                    (with-current-buffer retrospect-buffer-name
-                      (insert "|")
-                      ;; the following could make use of s-replace
-                      (dotimes (_ (- level 1))
-                        (insert (replace-regexp-in-string (regexp-quote " ") " " retrospect-indent-str)))
-                      (insert heading)
-                      (dotimes (_ level) (insert "|"))
-                      (insert (retrospect--minutes-str minutes))
-                      (insert "|\n")))
-                  (outline-next-heading))))))))
+  (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
+    (insert (format "|-|\n|%s|\n|-|\n" (alist-get bucket (plist-get retrospect-buckets :names))))
+    (with-current-buffer (find-file-noselect retrospect-source-filename)
+      (save-excursion
+        (goto-char (point-min))
+        (while
+            (progn
+              (let ((level (org-current-level))
+                    (heading
+                     (if retrospect-insert-org-links
+                         (org-store-link nil)
+                       (org-element-property :raw-value (org-element-at-point))))
+                    (minutes (plist-get (get-text-property (point) :retrospect-clock-minutes) bucket)))
+                (when minutes
+                  (with-current-buffer retrospect-buffer-name
+                    (insert "|")
+                    ;; the following could make use of s-replace
+                    (dotimes (_ (- level 1))
+                      (insert (replace-regexp-in-string (regexp-quote " ") " " retrospect-indent-str)))
+                    (insert heading)
+                    (dotimes (_ level) (insert "|"))
+                    (insert (retrospect--minutes-str minutes))
+                    (insert "|\n")))
+                (outline-next-heading)))))))
   (insert "|-|\n")
   (org-table-align)
   (goto-char (point-min))

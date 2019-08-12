@@ -40,13 +40,22 @@ Use the following snippet to get started with your own data:
       retrospect-buckets
         '(:names
           ((sole-bucket . "Sole Bucket"))
-          :classifiers
-          (((lambda () t) . sole-bucket))))
+          :classifier
+          (lambda () 'sole-bucket)))
 (global-set-key (kbd "C-c t") #'retrospect)
 ```
 
 This snippet configure a single bucket, identified by the symbol
 `sole-bucket`. Its humnan-friendly name, used in the `*retrospect*` buffer, is
-`Sole Bucket`. The predicate `(lambda () t)` is applied to each org entry in the
-source file. Since it always returns `t`, all the entries end up in the sole
-bucket.
+`Sole Bucket`. The classifier `(lambda () sole-bucket)` is applied to each org
+entry in the source file. Since it always returns the symbol `sole-bucket`, all
+the entries end up in the sole bucket.
+
+# `retrospect` key concepts
+
+Buckets form a partition of the org entries in the input file, i.e., each entry
+is in one and only one bucket. Entries are prevented from being put in multiple
+buckets to avoid counting time spent multiple times.
+
+Only the buckets listed under `retrospect-buckets`'s `:names` entry are
+displayed in the `*retrospect*` buffer.

@@ -53,13 +53,11 @@ Use buckets defined in BUCKETS, on test file NAME.org."
 
 (defvar end-to-end-buckets
   '(:names
-    ((bucket-a . "Bucket A")
-     (bucket-b . "Bucket B")
-     (bucket-c . "Bucket C"))
-    :classifiers
-    (((lambda () (equal 'a (retrospect-bucket-from-property))) . bucket-a)
-     ((lambda () (equal 'b (retrospect-bucket-from-property))) . bucket-b)
-     ((lambda () (equal 'c (retrospect-bucket-from-property))) . bucket-c))))
+    ((a . "Bucket A")
+     (b . "Bucket B")
+     (c . "Bucket C"))
+    :classifier
+    retrospect-bucket-from-property))
 
 (ert-deftest end-to-end-test ()
   (run-golden-test "end-to-end" end-to-end-buckets))
