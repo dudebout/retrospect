@@ -44,11 +44,6 @@
   :type 'string
   :group 'retrospect)
 
-(defcustom retrospect-insert-org-links t
-  "If t insert links to the org entries, else only display their names."
-  :type 'boolean
-  :group 'retrospect)
-
 (defcustom retrospect-buckets nil
   "Definition of the buckets.
 
@@ -64,6 +59,11 @@ cons cell return t when run on an org entry, that org entry is
 part of the associated bucket."
   :type '(plist :options ((:names (repeat (cons symbol string)))
                           (:classifiers (repeat (cons function symbol)))))
+  :group 'retrospect)
+
+(defcustom retrospect-insert-org-links t
+  "If t insert links to the org entries, else only display their names."
+  :type 'boolean
   :group 'retrospect)
 
 (defcustom retrospect-indent-str "    "
@@ -190,5 +190,9 @@ variable, and displays a summary in the *retrospect* buffer."
   (setq buffer-read-only t))
 
 (provide 'retrospect)
+
+;; Local Variables:
+;; indent-tabs-mode: nil
+;; End:
 
 ;;; retrospect.el ends here
