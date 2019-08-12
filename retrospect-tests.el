@@ -7,11 +7,6 @@
 (require 'ert)
 (require 'retrospect)
 
-(defun has-bucket-property (bucket-name)
-  "Return t if the entry at point has the `bucket` property BUCKET-NAME."
-  (equal (org-entry-get (point) "bucket" t)
-         bucket-name))
-
 (defun test-file (file)
   "Locate test file named FILE."
   (format "%s/test/%s" (getenv "PWD") file))
@@ -62,9 +57,9 @@ Use buckets defined in BUCKETS, on test file NAME.org."
      (bucket-b . "Bucket B")
      (bucket-c . "Bucket C"))
     :classifiers
-    (((lambda () (has-bucket-property "a")) . bucket-a)
-     ((lambda () (has-bucket-property "b")) . bucket-b)
-     ((lambda () (has-bucket-property "c")) . bucket-c))))
+    (((lambda () (equal 'a (retrospect-bucket-from-property))) . bucket-a)
+     ((lambda () (equal 'b (retrospect-bucket-from-property))) . bucket-b)
+     ((lambda () (equal 'c (retrospect-bucket-from-property))) . bucket-c))))
 
 (ert-deftest end-to-end-test ()
   (run-golden-test "end-to-end" end-to-end-buckets))

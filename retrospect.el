@@ -61,6 +61,13 @@ part of the associated bucket."
                           (:classifiers (repeat (cons function symbol)))))
   :group 'retrospect)
 
+(defcustom retrospect-bucket-property-name "bucket"
+  "Org property identifying the bucket of an org entry.
+
+Interning the value provides a bucket-identifying symbol."
+  :type 'string
+  :group 'retrospect)
+
 (defcustom retrospect-insert-org-links t
   "If t insert links to the org entries, else only display their names."
   :type 'boolean
@@ -188,6 +195,16 @@ variable, and displays a summary in the *retrospect* buffer."
             (,(kbd "<return>") . org-open-at-point))
   :group 'retrospect
   (setq buffer-read-only t))
+
+(defun retrospect-bucket-from-property ()
+  "Determine the bucket of the org entry at point from its `bucket` property.
+
+The result is a bucket symbol.
+
+If the entry at point does not have a `bucket` property, return nil."
+  (let ((bucket-property (org-entry-get (point) retrospect-bucket-property-name t)))
+    (when bucket-property
+        (intern bucket-property))))
 
 (provide 'retrospect)
 
