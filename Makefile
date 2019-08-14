@@ -58,4 +58,5 @@ clean:
 demo:
 	@emacs -Q -L . --eval "(progn\
 	(load-file \"retrospect-tests.el\")\
-	(run-interactive \"input\" demo-buckets))"
+	(setq retrospect-buckets demo-buckets)\
+	(run-interactive \"input\"))"
