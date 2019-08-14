@@ -43,9 +43,18 @@
     :classifier
     retrospect-bucket-from-property))
 
+(defvar default-time-range
+  '(:tstart "2018-12-29 Sat 13:02"
+    :tend "2018-12-29 Sat 13:03"))
+
 (ert-deftest default-test ()
   (let ((retrospect-buckets default-buckets))
     (run-golden-test "input" "default")))
+
+(ert-deftest timed-test ()
+  (let ((retrospect-buckets default-buckets)
+        (retrospect-time-range default-time-range))
+    (run-golden-test "input" "timed")))
 
 (defun run-interactive (input)
   "Run `retrospect' in interactive mode on test file INPUT.org."

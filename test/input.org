@@ -19,7 +19,7 @@ CLOCK: [2018-12-29 Sat 13:05]--[2018-12-29 Sat 13:06] =>  0:01
 :bucket:   c
 :END:
 :LOGBOOK:
-CLOCK: [2018-12-29 Sat 13:03]--[2018-12-29 Sat 13:04] =>  0:01
+CLOCK: [2018-12-29 Sat 13:02]--[2018-12-29 Sat 13:03] =>  0:01
 :END:
 *** level 2Aa
 :PROPERTIES:

@@ -59,6 +59,12 @@ symbol for the org entry at point."
                           (:classifier function)))
   :group 'retrospect)
 
+(defcustom retrospect-time-range nil
+  "Time range to be analyzed."
+  :type '(plist :options ((:tstart string)
+                          (:tend string)))
+  :group 'retrospect)
+
 (defcustom retrospect-bucket-property-name "bucket"
   "Org property identifying the bucket of an org entry.
 
@@ -153,7 +159,9 @@ This function is intended to be called after `retrospect' has
 been called.  It is the function called on refreshes."
   (interactive)
   (with-current-buffer (find-file-noselect retrospect-source-filename)
-    (retrospect--compute-logged-durations))
+    (retrospect--compute-logged-durations
+     (plist-get retrospect-time-range :tstart)
+     (plist-get retrospect-time-range :tend)))
   (let ((inhibit-read-only t))
     (erase-buffer)
     (retrospect--insert-buckets-content))
