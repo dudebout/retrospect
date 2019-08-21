@@ -82,6 +82,9 @@ Interning the value provides a bucket-identifying symbol."
   :type 'string
   :group 'retrospect)
 
+(defvar retrospect-total-clock-minutes nil
+  "Plist to accumulate the time logged per bucket.")
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Data manipulation
@@ -93,6 +96,7 @@ Interning the value provides a bucket-identifying symbol."
 The results are stored as text properties on the input file."
   (with-silent-modifications
     (remove-text-properties (point-min) (point-max) '(:retrospect-clock-minutes t)))
+  (setq retrospect-total-clock-minutes nil)
   (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
     (let* ((classifier (plist-get retrospect-buckets :classifier))
            (pred (lambda ()
@@ -112,6 +116,9 @@ The results are stored as text properties on the input file."
                 (let ((minutes-new (get-text-property (point) :org-clock-minutes))
                       (minutes-acc (get-text-property (point) :retrospect-clock-minutes)))
                   (when minutes-new
+                    (when (equal (org-current-level) 1)
+                      (setq retrospect-total-clock-minutes (plist-put retrospect-total-clock-minutes bucket (+ minutes-new
+                                                                                                               (or (plist-get retrospect-total-clock-minutes bucket) 0)))))
                     (let ((minutes-acc (plist-put minutes-acc bucket (+ minutes-new
                                                                         (or (plist-get minutes-acc bucket) 0)))))
                       (put-text-property (point) (point-at-eol) :retrospect-clock-minutes minutes-acc))))
@@ -129,29 +136,32 @@ The results are stored as text properties on the input file."
 (defun retrospect--insert-buckets-content ()
   "Insert each org entry with its duration under its containing bucket."
   (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
-    (insert (format "|-|\n|%s|\n|-|\n" (alist-get bucket (plist-get retrospect-buckets :names))))
-    (with-current-buffer (find-file-noselect retrospect-source-filename)
-      (save-excursion
-        (goto-char (point-min))
-        (while
-            (progn
-              (let ((level (org-current-level))
-                    (heading
-                     (if retrospect-insert-org-links
-                         (org-store-link nil)
-                       (org-element-property :raw-value (org-element-at-point))))
-                    (minutes (plist-get (get-text-property (point) :retrospect-clock-minutes) bucket)))
-                (when minutes
-                  (with-current-buffer retrospect-buffer-name
-                    (insert "|")
-                    ;; the following could make use of s-replace
-                    (dotimes (_ (- level 1))
-                      (insert (replace-regexp-in-string (regexp-quote " ") " " retrospect-indent-str)))
-                    (insert heading)
-                    (dotimes (_ level) (insert "|"))
-                    (insert (retrospect--minutes-str minutes))
-                    (insert "|\n")))
-                (outline-next-heading)))))))
+    (let ((bucket-minutes (plist-get retrospect-total-clock-minutes bucket)))
+      (insert (format "|-|\n|%s|%s|\n|-|\n"
+                      (alist-get bucket (plist-get retrospect-buckets :names))
+                      (retrospect--minutes-str (or bucket-minutes 0))))
+      (with-current-buffer (find-file-noselect retrospect-source-filename)
+        (save-excursion
+          (goto-char (point-min))
+          (while
+              (progn
+                (let ((level (org-current-level))
+                      (heading
+                       (if retrospect-insert-org-links
+                           (org-store-link nil)
+                         (org-element-property :raw-value (org-element-at-point))))
+                      (minutes (plist-get (get-text-property (point) :retrospect-clock-minutes) bucket)))
+                  (when minutes
+                    (with-current-buffer retrospect-buffer-name
+                      (insert "|")
+                      ;; the following could make use of s-replace
+                      (dotimes (_ (- level 1))
+                        (insert (replace-regexp-in-string (regexp-quote " ") " " retrospect-indent-str)))
+                      (insert heading)
+                      (dotimes (_ level) (insert "|"))
+                      (insert (retrospect--minutes-str minutes))
+                      (insert "|\n")))
+                  (outline-next-heading))))))))
   (insert "|-|\n")
   (org-table-align)
   (goto-char (point-min))
