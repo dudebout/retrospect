@@ -96,7 +96,7 @@ The results are stored as text properties on the input file."
   (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
     (let* ((classifier (plist-get retrospect-buckets :classifier))
            (pred (lambda ()
- (equal (funcall classifier) bucket))))
+                   (equal (funcall classifier) bucket))))
       ;; actual computation
       (org-clock-sum tstart tend pred)
       (with-silent-modifications
@@ -104,11 +104,17 @@ The results are stored as text properties on the input file."
           (goto-char (point-min))
           (while
               (progn
-                (let* ((minutes (get-text-property (point) :org-clock-minutes))
-                       (acc (get-text-property (point) :retrospect-clock-minutes)))
-                  (when minutes
-                    (setq acc (plist-put acc bucket (+ minutes (or (plist-get acc bucket) 0))))
-                    (put-text-property (point) (point-at-eol) :retrospect-clock-minutes acc)))
+                ;; `minutes-new' and `minutes-acc' contain data relative to the
+                ;; org entry at point:
+                ;;   + `minutes-new' is the time logged against `bucket'
+                ;;   + `minutes-acc' is a plist with the time logged against all
+                ;;     the buckets processed thus far
+                (let ((minutes-new (get-text-property (point) :org-clock-minutes))
+                      (minutes-acc (get-text-property (point) :retrospect-clock-minutes)))
+                  (when minutes-new
+                    (let ((minutes-acc (plist-put minutes-acc bucket (+ minutes-new
+                                                                        (or (plist-get minutes-acc bucket) 0)))))
+                      (put-text-property (point) (point-at-eol) :retrospect-clock-minutes minutes-acc))))
                 (outline-next-heading))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
