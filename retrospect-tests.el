@@ -39,7 +39,8 @@
   '(:names
     ((a . "Bucket A")
      (b . "Bucket B")
-     (c . "Bucket C"))
+     (c . "Bucket C")
+     (d . "Bucket D"))
     :classifier
     retrospect-bucket-from-property))
 

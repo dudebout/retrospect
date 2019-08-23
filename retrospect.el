@@ -5,7 +5,7 @@
 ;; Author: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Maintainer: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Created: 23 Feb 2018
-;; Modified: 05 Aug 2019
+;; Modified: 23 Aug 2019
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "26.1") (org "9.2"))
 ;; Keywords: org-mode retrospective time-management
@@ -194,7 +194,7 @@ This function is intended to be called from the *retrospect*
 buffer setup by a call to `retrospect'."
   (interactive)
   (retrospect--compute-buckets-content)
-  (retrospect--populate-buffer))
+  (retrospect--redraw-buffer))
 
 (defun retrospect--compute-buckets-content ()
   "Compute buckets content."
@@ -203,12 +203,30 @@ buffer setup by a call to `retrospect'."
      (plist-get retrospect-time-range :tstart)
      (plist-get retrospect-time-range :tend))))
 
-(defun retrospect--populate-buffer ()
-  "Display buckets content."
+(defun retrospect--redraw-buffer ()
+  "Erase the *retrospect* buffer and display buckets content."
   (let ((inhibit-read-only t))
     (erase-buffer)
     (retrospect--insert-buckets-content))
   (goto-char (point-min)))
+
+(defun retrospect--toggle-percentages ()
+  "Toggle `retrospect-display-percentages' and redraw the *retrospect* buffer."
+  (interactive)
+  (setq retrospect-display-percentages (not retrospect-display-percentages))
+  (retrospect--redraw-buffer))
+
+(defun retrospect--toggle-org-links ()
+  "Toggle `retrospect-insert-org-links' and redraw the *retrospect* buffer."
+  (interactive)
+  (setq retrospect-insert-org-links (not retrospect-insert-org-links))
+  (retrospect--redraw-buffer))
+
+(defun retrospect--toggle-empty-buckets ()
+  "Toggle `retrospect-display-empty-buckets' and redraw the *retrospect* buffer."
+  (interactive)
+  (setq retrospect-display-empty-buckets (not retrospect-display-empty-buckets))
+  (retrospect--redraw-buffer))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -238,6 +256,9 @@ into buckets, which are defined in the `retrospect-buckets`
 variable, and displays a summary in the *retrospect* buffer."
   :lighter " Retro"
   :keymap `(("g" . retrospect--refresh-buffer)
+            ("%" . retrospect--toggle-percentages)
+            ("l" . retrospect--toggle-org-links)
+            ("e" . retrospect--toggle-empty-buckets)
             ("q" . bury-buffer)
             ("n" . org-next-link)
             ("p" . org-previous-link)
