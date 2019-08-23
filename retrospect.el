@@ -77,6 +77,11 @@ Interning the value provides a bucket-identifying symbol."
   :type 'boolean
   :group 'retrospect)
 
+(defcustom retrospect-display-empty-buckets nil
+  "If t insert headers for bucket with no associated logged time."
+  :type 'boolean
+  :group 'retrospect)
+
 (defcustom retrospect-indent-str "    "
   "String used to indent org entries in the *retrospect* buffer."
   :type 'string
@@ -137,9 +142,11 @@ The results are stored as text properties on the input file."
   "Insert each org entry with its duration under its containing bucket."
   (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
     (let ((bucket-minutes (plist-get retrospect-total-clock-minutes bucket)))
-      (insert (format "|-|\n|%s|%s|\n|-|\n"
-                      (alist-get bucket (plist-get retrospect-buckets :names))
-                      (retrospect--minutes-str (or bucket-minutes 0))))
+      (when (or bucket-minutes retrospect-display-empty-buckets)
+        (insert "|-|\n")
+        (insert (format "|%s|%s|\n|-|\n"
+                        (alist-get bucket (plist-get retrospect-buckets :names))
+                        (retrospect--minutes-str (or bucket-minutes 0)))))
       (with-current-buffer (find-file-noselect retrospect-source-filename)
         (save-excursion
           (goto-char (point-min))

@@ -56,6 +56,12 @@
         (retrospect-time-range default-time-range))
     (run-golden-test "input" "timed")))
 
+(ert-deftest timed-display-empty-test ()
+  (let ((retrospect-buckets default-buckets)
+        (retrospect-time-range default-time-range)
+        (retrospect-display-empty-buckets t))
+    (run-golden-test "input" "timed-display-empty")))
+
 (defun run-interactive (input)
   "Run `retrospect' in interactive mode on test file INPUT.org."
   (setq visible-bell t
