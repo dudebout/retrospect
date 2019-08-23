@@ -51,6 +51,11 @@
   (let ((retrospect-buckets default-buckets))
     (run-golden-test "input" "default")))
 
+(ert-deftest default-percentages-test ()
+  (let ((retrospect-buckets default-buckets)
+        (retrospect-display-percentages t))
+    (run-golden-test "input" "default-percentages")))
+
 (ert-deftest timed-test ()
   (let ((retrospect-buckets default-buckets)
         (retrospect-time-range default-time-range))

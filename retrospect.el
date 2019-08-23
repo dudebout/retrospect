@@ -82,6 +82,11 @@ Interning the value provides a bucket-identifying symbol."
   :type 'boolean
   :group 'retrospect)
 
+(defcustom retrospect-display-percentages nil
+  "If t display times as percentage of total time logged instead of absolute times."
+  :type 'boolean
+  :group 'retrospect)
+
 (defcustom retrospect-indent-str "    "
   "String used to indent org entries in the *retrospect* buffer."
   :type 'string
@@ -89,6 +94,9 @@ Interning the value provides a bucket-identifying symbol."
 
 (defvar retrospect-total-clock-minutes nil
   "Plist to accumulate the time logged per bucket.")
+
+(defvar retrospect-total-minutes nil
+  "Accumulation of the time logged against all buckets.")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -101,7 +109,8 @@ Interning the value provides a bucket-identifying symbol."
 The results are stored as text properties on the input file."
   (with-silent-modifications
     (remove-text-properties (point-min) (point-max) '(:retrospect-clock-minutes t)))
-  (setq retrospect-total-clock-minutes nil)
+  (setq retrospect-total-clock-minutes nil
+        retrospect-total-minutes 0)
   (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
     (let* ((classifier (plist-get retrospect-buckets :classifier))
            (pred (lambda ()
@@ -122,8 +131,9 @@ The results are stored as text properties on the input file."
                       (minutes-acc (get-text-property (point) :retrospect-clock-minutes)))
                   (when minutes-new
                     (when (equal (org-current-level) 1)
-                      (setq retrospect-total-clock-minutes (plist-put retrospect-total-clock-minutes bucket (+ minutes-new
-                                                                                                               (or (plist-get retrospect-total-clock-minutes bucket) 0)))))
+                      (setq retrospect-total-clock-minutes (plist-put retrospect-total-clock-minutes
+                                                                      bucket (+ minutes-new (or (plist-get retrospect-total-clock-minutes bucket) 0)))
+                            retrospect-total-minutes (+ minutes-new retrospect-total-minutes)))
                     (let ((minutes-acc (plist-put minutes-acc bucket (+ minutes-new
                                                                         (or (plist-get minutes-acc bucket) 0)))))
                       (put-text-property (point) (point-at-eol) :retrospect-clock-minutes minutes-acc))))
@@ -135,8 +145,10 @@ The results are stored as text properties on the input file."
 ;;
 
 (defun retrospect--minutes-str (minutes)
-  "Pretty print the time duration MINUTES in hours and minutes."
-  (format-seconds "%h:%02m" (* 60 minutes)))
+  "Pretty print the time duration MINUTES in hours and minutes, or percentages."
+  (if retrospect-display-percentages
+      (format "%.1f%%" (/ (* minutes 100.0) retrospect-total-minutes))
+    (format-seconds "%h:%02m" (* 60 minutes))))
 
 (defun retrospect--insert-buckets-content ()
   "Insert each org entry with its duration under its containing bucket."
