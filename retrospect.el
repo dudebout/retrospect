@@ -175,16 +175,24 @@ The results are stored as text properties on the input file."
   (while (search-forward " " nil t)
     (replace-match " ")))
 
-(defun retrospect--populate-buffer ()
-  "Main `retrospect' function.
+(defun retrospect--refresh-buffer ()
+  "Compute and display buckets content.
 
-This function is intended to be called after `retrospect' has
-been called.  It is the function called on refreshes."
+This function is intended to be called from the *retrospect*
+buffer setup by a call to `retrospect'."
   (interactive)
+  (retrospect--compute-buckets-content)
+  (retrospect--populate-buffer))
+
+(defun retrospect--compute-buckets-content ()
+  "Compute buckets content."
   (with-current-buffer (find-file-noselect retrospect-source-filename)
     (retrospect--compute-logged-durations
      (plist-get retrospect-time-range :tstart)
-     (plist-get retrospect-time-range :tend)))
+     (plist-get retrospect-time-range :tend))))
+
+(defun retrospect--populate-buffer ()
+  "Display buckets content."
   (let ((inhibit-read-only t))
     (erase-buffer)
     (retrospect--insert-buckets-content))
@@ -205,7 +213,7 @@ been called.  It is the function called on refreshes."
     (with-current-buffer buffer
       (org-mode)
       (retrospect-mode 1)
-      (retrospect--populate-buffer))
+      (retrospect--refresh-buffer))
     (switch-to-buffer buffer)))
 
 (define-minor-mode retrospect-mode
@@ -217,7 +225,7 @@ time, etc. `retrospect` categorizes org entries with logged time
 into buckets, which are defined in the `retrospect-buckets`
 variable, and displays a summary in the *retrospect* buffer."
   :lighter " Retro"
-  :keymap `(("g" . retrospect--populate-buffer)
+  :keymap `(("g" . retrospect--refresh-buffer)
             ("q" . bury-buffer)
             ("n" . org-next-link)
             ("p" . org-previous-link)
