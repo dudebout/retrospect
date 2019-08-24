@@ -93,7 +93,7 @@ Interning the value provides a bucket-identifying symbol."
   :group 'retrospect)
 
 (defvar retrospect-total-clock-minutes nil
-  "Plist to accumulate the time logged per bucket.")
+  "Alist to accumulate the time logged per bucket.")
 
 (defvar retrospect-total-minutes nil
   "Accumulation of the time logged against all buckets.")
@@ -109,13 +109,13 @@ Interning the value provides a bucket-identifying symbol."
 The results are stored as text properties on the input file."
   (with-silent-modifications
     (remove-text-properties (point-min) (point-max) '(:retrospect-clock-minutes t)))
-  (setq retrospect-total-clock-minutes nil
-        retrospect-total-minutes 0)
+  (setq retrospect-total-clock-minutes nil)
+  ;; Traversing the bucket once per-bucket, so that `org-clock-sum' takes care
+  ;; of assigning time logged to the parent of entries in a given bucket.
   (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
     (let* ((classifier (plist-get retrospect-buckets :classifier))
            (pred (lambda ()
                    (equal (funcall classifier) bucket))))
-      ;; actual computation
       (org-clock-sum tstart tend pred)
       (with-silent-modifications
         (save-excursion
@@ -125,19 +125,17 @@ The results are stored as text properties on the input file."
                 ;; `minutes-new' and `minutes-acc' contain data relative to the
                 ;; org entry at point:
                 ;;   + `minutes-new' is the time logged against `bucket'
-                ;;   + `minutes-acc' is a plist with the time logged against all
+                ;;   + `minutes-acc' is an alist with the time logged against all
                 ;;     the buckets processed thus far
                 (let ((minutes-new (get-text-property (point) :org-clock-minutes))
                       (minutes-acc (get-text-property (point) :retrospect-clock-minutes)))
                   (when minutes-new
                     (when (equal (org-current-level) 1)
-                      (setq retrospect-total-clock-minutes (plist-put retrospect-total-clock-minutes
-                                                                      bucket (+ minutes-new (or (plist-get retrospect-total-clock-minutes bucket) 0)))
-                            retrospect-total-minutes (+ minutes-new retrospect-total-minutes)))
-                    (let ((minutes-acc (plist-put minutes-acc bucket (+ minutes-new
-                                                                        (or (plist-get minutes-acc bucket) 0)))))
-                      (put-text-property (point) (point-at-eol) :retrospect-clock-minutes minutes-acc))))
-                (outline-next-heading))))))))
+                      (cl-incf (alist-get bucket retrospect-total-clock-minutes 0) minutes-new))
+                    (cl-incf (alist-get bucket minutes-acc 0) minutes-new)
+                    (put-text-property (point) (point-at-eol) :retrospect-clock-minutes minutes-acc)))
+                (outline-next-heading)))))))
+  (setq retrospect-total-minutes (apply #'+ (mapcar #'cdr retrospect-total-clock-minutes))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -153,7 +151,7 @@ The results are stored as text properties on the input file."
 (defun retrospect--insert-buckets-content ()
   "Insert each org entry with its duration under its containing bucket."
   (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
-    (let ((bucket-minutes (plist-get retrospect-total-clock-minutes bucket)))
+    (let ((bucket-minutes (alist-get bucket retrospect-total-clock-minutes)))
       (when (or bucket-minutes retrospect-display-empty-buckets)
         (insert "|-|\n")
         (insert (format "|%s|%s|\n|-|\n"
@@ -169,7 +167,7 @@ The results are stored as text properties on the input file."
                        (if retrospect-insert-org-links
                            (org-store-link nil)
                          (org-element-property :raw-value (org-element-at-point))))
-                      (minutes (plist-get (get-text-property (point) :retrospect-clock-minutes) bucket)))
+                      (minutes (alist-get bucket (get-text-property (point) :retrospect-clock-minutes))))
                   (when minutes
                     (with-current-buffer retrospect-buffer-name
                       (insert "|")
