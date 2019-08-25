@@ -92,9 +92,14 @@ Interning the value provides a bucket-identifying symbol."
   :type 'boolean
   :group 'retrospect)
 
-(defcustom retrospect-use-percentages nil
-  "If t display times as percentage of total time logged instead of absolute times."
-  :type 'boolean
+(defcustom retrospect-minutes-fmt 'duration
+  "Format to display logged minutes.
+
+When set to `duration', the minutes are displayed as absolute
+durations.  When set to `percentage' they are displayed as
+percentages of the total time logged."
+  :type '(choice (const duration)
+                 (const percentage))
   :group 'retrospect)
 
 (defcustom retrospect-indent-str "    "
@@ -154,9 +159,11 @@ The results are stored as text properties on the input file."
 
 (defun retrospect--minutes-str (minutes)
   "Pretty print the time duration MINUTES in hours and minutes, or percentages."
-  (if retrospect-use-percentages
-      (format "%.1f%%" (/ (* minutes 100.0) retrospect-total-minutes))
-    (format-seconds "%h:%02m" (* 60 minutes))))
+  (pcase retrospect-minutes-fmt
+    ('percentage
+     (format "%.1f%%" (/ (* minutes 100.0) retrospect-total-minutes)))
+    ('duration
+     (format-seconds "%h:%02m" (* 60 minutes)))))
 
 (defun retrospect--insert-buckets-content ()
   "Insert each org entry with its duration under its containing bucket."
@@ -164,7 +171,7 @@ The results are stored as text properties on the input file."
     (insert "* Summary\n")
     (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
       (let ((bucket-minutes (alist-get bucket retrospect-total-clock-minutes))
-            (retrospect-use-percentages t))
+            (retrospect-minutes-fmt 'percentage))
         (when (or bucket-minutes retrospect-display-empty-buckets)
           (insert (format "+ %s :: %s\n"
                           (alist-get bucket (plist-get retrospect-buckets :names))
@@ -229,10 +236,13 @@ buffer setup by a call to `retrospect'."
     (retrospect--insert-buckets-content))
   (goto-char (point-min)))
 
-(defun retrospect--toggle-percentages ()
-  "Toggle `retrospect-use-percentages' and redraw the *retrospect* buffer."
+(defun retrospect--cycle-minutes-fmt ()
+  "Cycle through `retrospect-minutes-fmt' and redraw the *retrospect* buffer."
   (interactive)
-  (setq retrospect-use-percentages (not retrospect-use-percentages))
+  (setq retrospect-minutes-fmt
+        (if (equal retrospect-minutes-fmt 'duration)
+            'percentage
+          'duration))
   (retrospect--redraw-buffer))
 
 (defun retrospect--toggle-org-links ()
@@ -287,7 +297,7 @@ into buckets, which are defined in the `retrospect-buckets`
 variable, and displays a summary in the *retrospect* buffer."
   :lighter " Retro"
   :keymap `(("g" . retrospect--refresh-buffer)
-            ("%" . retrospect--toggle-percentages)
+            ("f" . retrospect--cycle-minutes-fmt)
             ("l" . retrospect--toggle-org-links)
             ("e" . retrospect--toggle-empty-buckets)
             ("s" . retrospect--toggle-summary)

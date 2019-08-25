@@ -59,7 +59,7 @@
 
 (ert-deftest default-percentages-test ()
   (let ((retrospect-buckets default-buckets)
-        (retrospect-use-percentages t))
+        (retrospect-minutes-fmt 'percentage))
     (run-golden-test "input" "default-percentages")))
 
 (ert-deftest timed-test ()
