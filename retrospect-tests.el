@@ -30,9 +30,9 @@
     (retrospect)
     (let ((expected (progn
                       (find-file (test-file-golden output))
-                      (buffer-string)))
+                      (buffer-substring-no-properties (point-min) (point-max))))
           (got (with-current-buffer retrospect-buffer-name
-                 (buffer-string))))
+                 (buffer-substring-no-properties (point-min) (point-max)))))
       (should (equal got expected)))))
 
 (defvar default-buckets
