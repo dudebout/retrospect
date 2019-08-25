@@ -82,6 +82,11 @@ Interning the value provides a bucket-identifying symbol."
   :type 'boolean
   :group 'retrospect)
 
+(defcustom retrospect-display-details t
+  "If t display a table with detailled buckets content in the *retrospect* buffer."
+  :type 'boolean
+  :group 'retrospect)
+
 (defcustom retrospect-use-percentages nil
   "If t display times as percentage of total time logged instead of absolute times."
   :type 'boolean
@@ -150,40 +155,42 @@ The results are stored as text properties on the input file."
 
 (defun retrospect--insert-buckets-content ()
   "Insert each org entry with its duration under its containing bucket."
-  (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
-    (let ((bucket-minutes (alist-get bucket retrospect-total-clock-minutes)))
-      (when (or bucket-minutes retrospect-display-empty-buckets)
-        (insert "|-|\n")
-        (insert (format "|%s|%s|\n|-|\n"
-                        (alist-get bucket (plist-get retrospect-buckets :names))
-                        (retrospect--minutes-str (or bucket-minutes 0)))))
-      (with-current-buffer (find-file-noselect retrospect-source-filename)
-        (save-excursion
-          (goto-char (point-min))
-          (while
-              (progn
-                (let ((level (org-current-level))
-                      (heading
-                       (if retrospect-insert-org-links
-                           (org-store-link nil)
-                         (org-element-property :raw-value (org-element-at-point))))
-                      (minutes (alist-get bucket (get-text-property (point) :retrospect-clock-minutes))))
-                  (when minutes
-                    (with-current-buffer retrospect-buffer-name
-                      (insert "|")
-                      ;; the following could make use of s-replace
-                      (dotimes (_ (- level 1))
-                        (insert (replace-regexp-in-string (regexp-quote " ") " " retrospect-indent-str)))
-                      (insert heading)
-                      (dotimes (_ level) (insert "|"))
-                      (insert (retrospect--minutes-str minutes))
-                      (insert "|\n")))
-                  (outline-next-heading))))))))
-  (insert "|-|\n")
-  (org-table-align)
-  (goto-char (point-min))
-  (while (search-forward " " nil t)
-    (replace-match " ")))
+  (when retrospect-display-details
+    (insert "* Details\n")
+    (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
+      (let ((bucket-minutes (alist-get bucket retrospect-total-clock-minutes)))
+        (when (or bucket-minutes retrospect-display-empty-buckets)
+          (insert "|-|\n")
+          (insert (format "|%s|%s|\n|-|\n"
+                          (alist-get bucket (plist-get retrospect-buckets :names))
+                          (retrospect--minutes-str (or bucket-minutes 0)))))
+        (with-current-buffer (find-file-noselect retrospect-source-filename)
+          (save-excursion
+            (goto-char (point-min))
+            (while
+                (progn
+                  (let ((level (org-current-level))
+                        (heading
+                         (if retrospect-insert-org-links
+                             (org-store-link nil)
+                           (org-element-property :raw-value (org-element-at-point))))
+                        (minutes (alist-get bucket (get-text-property (point) :retrospect-clock-minutes))))
+                    (when minutes
+                      (with-current-buffer retrospect-buffer-name
+                        (insert "|")
+                        ;; the following could make use of s-replace
+                        (dotimes (_ (- level 1))
+                          (insert (replace-regexp-in-string (regexp-quote " ") " " retrospect-indent-str)))
+                        (insert heading)
+                        (dotimes (_ level) (insert "|"))
+                        (insert (retrospect--minutes-str minutes))
+                        (insert "|\n")))
+                    (outline-next-heading))))))))
+    (insert "|-|\n")
+    (org-table-align)
+    (goto-char (point-min))
+    (while (search-forward " " nil t)
+      (replace-match " "))))
 
 (defun retrospect--refresh-buffer ()
   "Compute and display buckets content.
@@ -226,6 +233,12 @@ buffer setup by a call to `retrospect'."
   (setq retrospect-display-empty-buckets (not retrospect-display-empty-buckets))
   (retrospect--redraw-buffer))
 
+(defun retrospect--toggle-details ()
+  "Toggle `retrospect-display-details' and redraw the *retrospect* buffer."
+  (interactive)
+  (setq retrospect-display-details (not retrospect-display-details))
+  (retrospect--redraw-buffer))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; User Interface
@@ -257,6 +270,7 @@ variable, and displays a summary in the *retrospect* buffer."
             ("%" . retrospect--toggle-percentages)
             ("l" . retrospect--toggle-org-links)
             ("e" . retrospect--toggle-empty-buckets)
+            ("d" . retrospect--toggle-details)
             ("q" . bury-buffer)
             ("n" . org-next-link)
             ("p" . org-previous-link)
