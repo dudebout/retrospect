@@ -5,7 +5,7 @@
 ;; Author: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Maintainer: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Created: 23 Feb 2018
-;; Modified: 23 Aug 2019
+;; Modified: 25 Aug 2019
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "26.1") (org "9.2"))
 ;; Keywords: org-mode retrospective time-management
@@ -82,7 +82,7 @@ Interning the value provides a bucket-identifying symbol."
   :type 'boolean
   :group 'retrospect)
 
-(defcustom retrospect-display-percentages nil
+(defcustom retrospect-use-percentages nil
   "If t display times as percentage of total time logged instead of absolute times."
   :type 'boolean
   :group 'retrospect)
@@ -144,7 +144,7 @@ The results are stored as text properties on the input file."
 
 (defun retrospect--minutes-str (minutes)
   "Pretty print the time duration MINUTES in hours and minutes, or percentages."
-  (if retrospect-display-percentages
+  (if retrospect-use-percentages
       (format "%.1f%%" (/ (* minutes 100.0) retrospect-total-minutes))
     (format-seconds "%h:%02m" (* 60 minutes))))
 
@@ -209,9 +209,9 @@ buffer setup by a call to `retrospect'."
   (goto-char (point-min)))
 
 (defun retrospect--toggle-percentages ()
-  "Toggle `retrospect-display-percentages' and redraw the *retrospect* buffer."
+  "Toggle `retrospect-use-percentages' and redraw the *retrospect* buffer."
   (interactive)
-  (setq retrospect-display-percentages (not retrospect-display-percentages))
+  (setq retrospect-use-percentages (not retrospect-use-percentages))
   (retrospect--redraw-buffer))
 
 (defun retrospect--toggle-org-links ()
