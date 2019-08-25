@@ -49,9 +49,9 @@
 
 Each bucket is identified by a symbol.
 
-`:names' is a list of cons cells whose car are symbols
-identifying buckets and cdr their human-friendly names, used in
-the *retrospect* buffer.
+`:names' is an association list whose car are symbols identifying
+buckets and cdr their human-friendly names, used in the
+*retrospect* buffer.
 
 `:classifier' is a function which returns the bucket-identifying
 symbol for the org entry at point."
@@ -78,7 +78,12 @@ Interning the value provides a bucket-identifying symbol."
   :group 'retrospect)
 
 (defcustom retrospect-display-empty-buckets nil
-  "If t insert headers for bucket with no associated logged time."
+  "If t insert information for bucket with no associated logged time."
+  :type 'boolean
+  :group 'retrospect)
+
+(defcustom retrospect-display-summary nil
+  "If t display a summary in the *retrospect* buffer."
   :type 'boolean
   :group 'retrospect)
 
@@ -155,6 +160,15 @@ The results are stored as text properties on the input file."
 
 (defun retrospect--insert-buckets-content ()
   "Insert each org entry with its duration under its containing bucket."
+  (when retrospect-display-summary
+    (insert "* Summary\n")
+    (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
+      (let ((bucket-minutes (alist-get bucket retrospect-total-clock-minutes))
+            (retrospect-use-percentages t))
+        (when (or bucket-minutes retrospect-display-empty-buckets)
+          (insert (format "+ %s :: %s\n"
+                          (alist-get bucket (plist-get retrospect-buckets :names))
+                          (retrospect--minutes-str (or bucket-minutes 0))))))))
   (when retrospect-display-details
     (insert "* Details\n")
     (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
@@ -233,6 +247,12 @@ buffer setup by a call to `retrospect'."
   (setq retrospect-display-empty-buckets (not retrospect-display-empty-buckets))
   (retrospect--redraw-buffer))
 
+(defun retrospect--toggle-summary ()
+  "Toggle `retrospect-display-summary' and redraw the *retrospect* buffer."
+  (interactive)
+  (setq retrospect-display-summary (not retrospect-display-summary))
+  (retrospect--redraw-buffer))
+
 (defun retrospect--toggle-details ()
   "Toggle `retrospect-display-details' and redraw the *retrospect* buffer."
   (interactive)
@@ -270,6 +290,7 @@ variable, and displays a summary in the *retrospect* buffer."
             ("%" . retrospect--toggle-percentages)
             ("l" . retrospect--toggle-org-links)
             ("e" . retrospect--toggle-empty-buckets)
+            ("s" . retrospect--toggle-summary)
             ("d" . retrospect--toggle-details)
             ("q" . bury-buffer)
             ("n" . org-next-link)

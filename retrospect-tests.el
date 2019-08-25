@@ -52,6 +52,11 @@
   (let ((retrospect-buckets default-buckets))
     (run-golden-test "input" "default")))
 
+(ert-deftest default-summary-test ()
+  (let ((retrospect-buckets default-buckets)
+        (retrospect-display-summary t))
+    (run-golden-test "input" "default-summary")))
+
 (ert-deftest default-percentages-test ()
   (let ((retrospect-buckets default-buckets)
         (retrospect-use-percentages t))
