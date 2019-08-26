@@ -55,7 +55,7 @@ buckets and cdr their human-friendly names, used in the
 
 `:classifier' is a function which returns the bucket-identifying
 symbol for the org entry at point."
-  :type '(plist :options ((:names (repeat (cons symbol string)))
+  :type '(plist :options ((:names (alist :key-type symbol :value-type string))
                           (:classifier function)))
   :group 'retrospect)
 
@@ -63,6 +63,17 @@ symbol for the org entry at point."
   "Time range to be analyzed."
   :type '(plist :options ((:tstart string)
                           (:tend string)))
+  :group 'retrospect)
+
+(defcustom retrospect-summary-transfers nil
+  "Rules to transfer bucket contents for the summary.
+
+Alist whose keys are buckets to be emptied, and values are alists
+defining in which bucket the content should be transferred.  Each
+such alist defines a weighted list of buckets, where keys are
+buckets, and values are weights."
+  :type '(alist :key-type symbol
+                :value-type (alist :key-type symbol :value-type number))
   :group 'retrospect)
 
 (defcustom retrospect-bucket-property-name "bucket"
@@ -110,9 +121,6 @@ percentages of the total time logged."
 (defvar retrospect-total-clock-minutes nil
   "Alist to accumulate the time logged per bucket.")
 
-(defvar retrospect-total-minutes nil
-  "Accumulation of the time logged against all buckets.")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Data manipulation
@@ -149,8 +157,25 @@ The results are stored as text properties on the input file."
                       (cl-incf (alist-get bucket retrospect-total-clock-minutes 0) minutes-new))
                     (cl-incf (alist-get bucket minutes-acc 0) minutes-new)
                     (put-text-property (point) (point-at-eol) :retrospect-clock-minutes minutes-acc)))
-                (outline-next-heading)))))))
-  (setq retrospect-total-minutes (apply #'+ (mapcar #'cdr retrospect-total-clock-minutes))))
+                (outline-next-heading))))))))
+
+(defun retrospect--total-minutes ()
+  "Return the total logged time."
+  (apply #'+ (mapcar #'cdr retrospect-total-clock-minutes)))
+
+(defun retrospect--transferred-durations ()
+  "Return an alist of per-bucket durations to be displayed in the summary."
+  (let ((result (copy-alist retrospect-total-clock-minutes)))
+    (dolist (src (mapcar #'car retrospect-summary-transfers))
+      (let ((transferred-minutes (alist-get src result))
+            (denominator (apply #'+ (mapcar #'cdr (alist-get src retrospect-summary-transfers)))))
+        (dolist (dst (mapcar #'car (alist-get src retrospect-summary-transfers)))
+          (let* ((numerator (alist-get dst (alist-get src retrospect-summary-transfers)))
+                 (ratio (/ (float numerator) denominator))
+                 (minutes (* transferred-minutes ratio)))
+            (cl-incf (alist-get dst result 0) minutes)))
+        (setf result (cl-delete src result :key #'car :test #'equal))))
+    result))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -161,7 +186,7 @@ The results are stored as text properties on the input file."
   "Pretty print the time duration MINUTES in hours and minutes, or percentages."
   (pcase retrospect-minutes-fmt
     ('percentage
-     (format "%.1f%%" (/ (* minutes 100.0) retrospect-total-minutes)))
+     (format "%.1f%%" (/ (* minutes 100.0) (retrospect--total-minutes))))
     ('duration
      (format-seconds "%h:%02m" (* 60 minutes)))))
 
@@ -169,13 +194,14 @@ The results are stored as text properties on the input file."
   "Insert each org entry with its duration under its containing bucket."
   (when retrospect-display-summary
     (insert "* Summary\n")
-    (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
-      (let ((bucket-minutes (alist-get bucket retrospect-total-clock-minutes))
-            (retrospect-minutes-fmt 'percentage))
-        (when (or bucket-minutes retrospect-display-empty-buckets)
-          (insert (format "+ %s :: %s\n"
-                          (alist-get bucket (plist-get retrospect-buckets :names))
-                          (retrospect--minutes-str (or bucket-minutes 0))))))))
+    (let ((transferred-durations (retrospect--transferred-durations)))
+      (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
+        (let ((bucket-minutes (alist-get bucket transferred-durations))
+              (retrospect-minutes-fmt 'percentage))
+          (when (or bucket-minutes retrospect-display-empty-buckets)
+            (insert (format "+ %s :: %s\n"
+                            (alist-get bucket (plist-get retrospect-buckets :names))
+                            (retrospect--minutes-str (or bucket-minutes 0)))))))))
   (when retrospect-display-details
     (insert "* Details\n")
     (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))

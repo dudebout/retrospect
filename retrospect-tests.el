@@ -48,6 +48,9 @@
   '(:tstart "2018-12-29 Sat 13:02"
     :tend "2018-12-29 Sat 13:03"))
 
+(defvar default-transfers
+  '((c . ((a . 1) (b . 3)))))
+
 (ert-deftest default-test ()
   (let ((retrospect-buckets default-buckets))
     (run-golden-test "input" "default")))
@@ -56,6 +59,12 @@
   (let ((retrospect-buckets default-buckets)
         (retrospect-display-summary t))
     (run-golden-test "input" "default-summary")))
+
+(ert-deftest default-summary-transfers-test ()
+  (let ((retrospect-buckets default-buckets)
+        (retrospect-display-summary t)
+        (retrospect-summary-transfers default-transfers))
+    (run-golden-test "input" "default-summary-transfers")))
 
 (ert-deftest default-percentages-test ()
   (let ((retrospect-buckets default-buckets)
