@@ -51,6 +51,9 @@
 (defvar default-transfers
   '((c . ((a . 1) (b . 3)))))
 
+(defvar default-transfers-drop
+  '((a . ())))
+
 (ert-deftest default-test ()
   (let ((retrospect-buckets default-buckets))
     (run-golden-test "input" "default")))
@@ -65,6 +68,12 @@
         (retrospect-display-summary t)
         (retrospect-summary-transfers default-transfers))
     (run-golden-test "input" "default-summary-transfers")))
+
+(ert-deftest default-summary-transfers-drop-test ()
+  (let ((retrospect-buckets default-buckets)
+        (retrospect-display-summary t)
+        (retrospect-summary-transfers default-transfers-drop))
+    (run-golden-test "input" "default-summary-transfers-drop")))
 
 (ert-deftest default-percentages-test ()
   (let ((retrospect-buckets default-buckets)
