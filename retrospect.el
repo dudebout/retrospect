@@ -207,37 +207,55 @@ The results are stored as text properties on the input file."
     (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
       (let ((bucket-minutes (alist-get bucket retrospect-total-durations)))
         (when (or bucket-minutes retrospect-display-empty-buckets)
-          (insert "|-|\n")
-          (insert (format "|%s|%s|\n|-|\n"
-                          (alist-get bucket (plist-get retrospect-buckets :names))
-                          (retrospect--minutes-str retrospect-total-durations (or bucket-minutes 0)))))
-        (with-current-buffer (find-file-noselect retrospect-source-filename)
-          (save-excursion
-            (goto-char (point-min))
-            (while
-                (progn
-                  (let ((level (org-current-level))
-                        (heading
-                         (if retrospect-insert-org-links
-                             (org-store-link nil)
-                           (org-element-property :raw-value (org-element-at-point))))
-                        (minutes (alist-get bucket (get-text-property (point) :retrospect-clock-minutes))))
-                    (when minutes
-                      (with-current-buffer retrospect-buffer-name
-                        (insert "|")
-                        ;; the following could make use of s-replace
-                        (dotimes (_ (- level 1))
-                          (insert (replace-regexp-in-string (regexp-quote " ") " " retrospect-indent-str)))
-                        (insert heading)
-                        (dotimes (_ level) (insert "|"))
-                        (insert (retrospect--minutes-str retrospect-total-durations minutes))
-                        (insert "|\n")))
-                    (outline-next-heading))))))))
-    (insert "|-|\n")
-    (org-table-align)
-    (goto-char (point-min))
-    (while (search-forward " " nil t)
-      (replace-match " "))))
+          (retrospect--insert-details-header (alist-get bucket (plist-get retrospect-buckets :names)) (or bucket-minutes 0))))
+          (retrospect--insert-details-body bucket))
+    (retrospect--finalize-details))
+  (retrospect--finalize-buffer))
+
+(defun retrospect--insert-details-header (name minutes)
+  "As part of a details table, insert the org table header for a section.
+
+The section is titled NAME, and has MINUTES logged against it."
+  (insert "|-|\n")
+  (insert (format "|%s|%s|\n|-|\n"
+                  name
+                  (retrospect--minutes-str retrospect-total-durations minutes))))
+
+(defun retrospect--insert-details-body (bucket)
+  "As part of a details table, insert the org table body BUCKET's section."
+  (with-current-buffer (find-file-noselect retrospect-source-filename)
+    (save-excursion
+      (goto-char (point-min))
+      (while
+          (progn
+            (let ((level (org-current-level))
+                  (heading
+                   (if retrospect-insert-org-links
+                       (org-store-link nil)
+                     (org-element-property :raw-value (org-element-at-point))))
+                  (minutes (alist-get bucket (get-text-property (point) :retrospect-clock-minutes))))
+              (when minutes
+                (with-current-buffer retrospect-buffer-name
+                  (insert "|")
+                  ;; the following could make use of s-replace
+                  (dotimes (_ (- level 1))
+                    (insert (replace-regexp-in-string (regexp-quote " ") " " retrospect-indent-str)))
+                  (insert heading)
+                  (dotimes (_ level) (insert "|"))
+                  (insert (retrospect--minutes-str retrospect-total-durations minutes))
+                  (insert "|\n")))
+              (outline-next-heading)))))))
+
+(defun retrospect--finalize-details ()
+  "Finalize a details table."
+  (insert "|-|\n")
+  (org-table-align))
+
+(defun retrospect--finalize-buffer ()
+  "Finalize the *retrospect* buffer."
+  (goto-char (point-min))
+  (while (search-forward " " nil t)
+    (replace-match " ")))
 
 (defun retrospect--refresh-buffer ()
   "Compute and display buckets content.
