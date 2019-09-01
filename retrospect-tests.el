@@ -58,6 +58,11 @@
   (let ((retrospect-buckets default-buckets))
     (run-golden-test "input" "default")))
 
+(ert-deftest default-error-test ()
+  (let ((retrospect-buckets (copy-tree default-buckets)))
+    (setf (cl-getf retrospect-buckets :names) (assq-delete-all 'c (cl-getf retrospect-buckets :names)))
+    (run-golden-test "input" "default-error")))
+
 (ert-deftest default-summary-test ()
   (let ((retrospect-buckets default-buckets)
         (retrospect-display-summary t))

@@ -30,6 +30,7 @@
 
 ;; The package-level documentation is available in the repository's README.md.
 
+(require 'dash)
 (require 'org)
 
 ;;; Code:
@@ -133,31 +134,40 @@ The results are stored as text properties on the input file."
   (with-silent-modifications
     (remove-text-properties (point-min) (point-max) '(:retrospect-clock-minutes t)))
   (setq retrospect-total-durations nil)
-  ;; Traversing the bucket once per-bucket, so that `org-clock-sum' takes care
-  ;; of assigning time logged to the parent of entries in a given bucket.
-  (dolist (bucket (mapcar #'car (plist-get retrospect-buckets :names)))
-    (let* ((classifier (plist-get retrospect-buckets :classifier))
-           (pred (lambda ()
-                   (equal (funcall classifier) bucket))))
-      (org-clock-sum tstart tend pred)
-      (with-silent-modifications
-        (save-excursion
-          (goto-char (point-min))
-          (while
-              (progn
-                ;; `minutes-new' and `minutes-acc' contain data relative to the
-                ;; org entry at point:
-                ;;   + `minutes-new' is the time logged against `bucket'
-                ;;   + `minutes-acc' is an alist with the time logged against all
-                ;;     the buckets processed thus far
-                (let ((minutes-new (get-text-property (point) :org-clock-minutes))
-                      (minutes-acc (get-text-property (point) :retrospect-clock-minutes)))
-                  (when minutes-new
-                    (when (equal (org-current-level) 1)
-                      (cl-incf (alist-get bucket retrospect-total-durations 0) minutes-new))
-                    (cl-incf (alist-get bucket minutes-acc 0) minutes-new)
-                    (put-text-property (point) (point-at-eol) :retrospect-clock-minutes minutes-acc)))
-                (outline-next-heading))))))))
+
+  (let* ((buckets ())
+        (classifier (plist-get retrospect-buckets :classifier))
+        ;; Use the predicate's side effect to compute the list of buckets
+        ;; against which time was loggend between `tstart' and `tend'.
+        (pred (lambda ()
+                (setq buckets (-union buckets (list (funcall classifier))))
+                nil)))
+    (org-clock-sum tstart tend pred)
+
+    ;; Traversing the bucket once per-bucket, so that `org-clock-sum' takes care
+    ;; of assigning time logged to the parent of entries in a given bucket.
+    (dolist (bucket buckets)
+      (let* ((pred (lambda ()
+                     (equal (funcall classifier) bucket))))
+        (org-clock-sum tstart tend pred)
+        (with-silent-modifications
+          (save-excursion
+            (goto-char (point-min))
+            (while
+                (progn
+                  ;; `minutes-new' and `minutes-acc' contain data relative to the
+                  ;; org entry at point:
+                  ;;   + `minutes-new' is the time logged against `bucket'
+                  ;;   + `minutes-acc' is an alist with the time logged against all
+                  ;;     the buckets processed thus far
+                  (let ((minutes-new (get-text-property (point) :org-clock-minutes))
+                        (minutes-acc (get-text-property (point) :retrospect-clock-minutes)))
+                    (when minutes-new
+                      (when (equal (org-current-level) 1)
+                        (cl-incf (alist-get bucket retrospect-total-durations 0) minutes-new))
+                      (cl-incf (alist-get bucket minutes-acc 0) minutes-new)
+                      (put-text-property (point) (point-at-eol) :retrospect-clock-minutes minutes-acc)))
+                  (outline-next-heading)))))))))
 
 (defun retrospect--total-minutes (durations)
   "Return the total logged time in the DURATIONS alist."
@@ -192,6 +202,16 @@ The results are stored as text properties on the input file."
 
 (defun retrospect--insert-buckets-content ()
   "Insert each org entry with its duration under its containing bucket."
+  (let ((unnamed-buckets (-difference
+                          (mapcar #'car retrospect-total-durations)
+                          (mapcar #'car (plist-get retrospect-buckets :names)))))
+    (when unnamed-buckets
+      (insert "* Errors\n")
+      (dolist (bucket unnamed-buckets)
+        (let ((bucket-minutes (alist-get bucket retrospect-total-durations)))
+          (retrospect--insert-details-header (symbol-name bucket) bucket-minutes))
+          (retrospect--insert-details-body bucket))
+      (retrospect--finalize-details)))
   (when retrospect-display-summary
     (insert "* Summary\n")
     (let ((transferred-durations (retrospect--transferred-durations)))
