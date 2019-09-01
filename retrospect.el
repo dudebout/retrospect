@@ -5,9 +5,9 @@
 ;; Author: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Maintainer: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Created: 23 Feb 2018
-;; Modified: 25 Aug 2019
+;; Modified: 31 Aug 2019
 ;; Version: 0.1
-;; Package-Requires: ((emacs "26.1") (org "9.2"))
+;; Package-Requires: ((emacs "26.1") (org "9.2") (dash "2.14"))
 ;; Keywords: org-mode retrospective time-management
 ;; URL: https://github.com/dudebout/retrospect
 
