@@ -1,3 +1,9 @@
+emacs = emacs -Q
+EMACSLOADPATH ?= $(shell emacs -Q --batch --eval '(message (if (locate-library "retrospect") "" "."))' 2>&1)
+ifneq (,$(EMACSLOADPATH))
+export EMACSLOADPATH
+endif
+
 .PHONY: all
 all: test
 
@@ -9,7 +15,7 @@ test: ert-test readme-test
 # ------------------------------------------------------------------------------
 .PHONY: ert-test
 ert-test:
-	@emacs -Q --batch -L . --eval "(progn\
+	@$(emacs) --batch --eval "(progn\
 	(load-file \"retrospect-tests.el\")\
 	(ert-run-tests-batch-and-exit))"
 
@@ -28,14 +34,14 @@ readme_el = readme.el
 #     empty, the length of the buffer
 .PHONY: readme-test
 readme-test: $(readme_el)
-	@emacs -Q --batch -L . --eval "(progn\
+	@$(emacs) --batch --eval "(progn\
 	(load-file \"readme.el\")\
 	(retrospect)\
 	(unless (> (length (buffer-string)) 100) (error \"\")))"
 
 .PHONY: readme-run
 readme-run: $(readme_el)
-	@emacs -Q -L . --load $<
+	@$(emacs) --load $<
 
 # Extract the only elisp snippet, and point at an existing input file.
 $(readme_el):  README.md
@@ -46,7 +52,7 @@ $(readme_el):  README.md
 
 .PHONY: clean
 clean:
-	rm -f $(readme_el)
+	rm -f $(readme_el) result*
 
 # ------------------------------------------------------------------------------
 # Demo
@@ -56,7 +62,7 @@ clean:
 # ------------------------------------------------------------------------------
 .PHONY: demo
 demo:
-	@emacs -Q -L . --eval "(progn\
+	@$(emacs) --eval "(progn\
 	(load-file \"retrospect-tests.el\")\
 	(setq retrospect-buckets demo-buckets)\
 	(run-interactive \"input\"))"

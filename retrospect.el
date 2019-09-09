@@ -5,7 +5,7 @@
 ;; Author: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Maintainer: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Created: 23 Feb 2018
-;; Modified: 31 Aug 2019
+;; Modified: 09 Sep 2019
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "26.1") (org "9.2") (dash "2.14"))
 ;; Keywords: org-mode retrospective time-management
@@ -338,8 +338,9 @@ buffer setup by a call to `retrospect'."
 ;;; User Interface
 ;;
 
+;;;###autoload
 (defun retrospect ()
-  "Setup the `retrospect' buffer, compute, and display buckets content."
+  "Setup the *retrospect* buffer, compute, and display buckets content."
   (interactive)
   (dolist (var '(retrospect-source-filename retrospect-buckets))
     (unless (symbol-value var)

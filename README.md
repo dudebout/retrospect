@@ -84,3 +84,12 @@ in different ways.
 By default, `retrospect`  does not display empty buckets,  i.e., buckets against
 which  no time  was logged.  Setting `retrospect-display-empty-buckets`  to `t`,
 displays their content in the summary and in the details sections
+
+# `nix` expressions
+
+`nix` expressions are provided to run repeatable tests. To take advantage of
+them, replace uses of `make X` above by `nix-shell --run 'make X'`.
+
+`shell.nix` provides an environment containing `emacsWithpackages [retrospect]`,
+where the `retrospect` derivation is built from the local `retrospect.el` using
+the `melpaBuild` recipe in `package.nix`.
