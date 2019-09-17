@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/dudebout/retrospect.svg?branch=master)](https://travis-ci.org/dudebout/retrospect)
+
 # A retrospective mode for org
 
 Determine how time you logged in org was spent. Use this information to bill
