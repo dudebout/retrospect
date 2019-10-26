@@ -48,6 +48,10 @@
   '(:tstart "2018-12-29 Sat 13:02"
     :tend "2018-12-29 Sat 13:03"))
 
+(defun default-time-range-constant-function ()
+  "Constant function returning the default-time-range value."
+  default-time-range)
+
 (defvar default-transfers
   '((c . ((a . 1) (b . 3)))))
 
@@ -90,11 +94,51 @@
         (retrospect-time-range default-time-range))
     (run-golden-test "input" "timed")))
 
+(ert-deftest timed-function-test ()
+  (let ((retrospect-buckets default-buckets)
+        (retrospect-time-range #'default-time-range-constant-function))
+    (run-golden-test "input" "timed")))
+
 (ert-deftest timed-display-empty-test ()
   (let ((retrospect-buckets default-buckets)
         (retrospect-time-range default-time-range)
         (retrospect-display-empty-buckets t))
     (run-golden-test "input" "timed-display-empty")))
+
+(ert-deftest time-range-month-test ()
+  (let ((current-time '(0 0 0 25 10 2019))
+        (time-range-2019-10 '(:tstart "2019-10-01"
+                              :tend "2019-11-01"))
+        (time-range-2018-10 '(:tstart "2018-10-01"
+                              :tend "2018-11-01"))
+        (time-range-2018-08 '(:tstart "2018-08-01"
+                              :tend "2018-09-01"))
+        (time-range-2019-08 '(:tstart "2019-08-01"
+                              :tend "2019-09-01")))
+    (should
+     (equal
+      (retrospect-time-range-month nil nil current-time)
+      time-range-2019-10))
+    (should
+     (equal
+      (retrospect-time-range-month 8 nil current-time)
+      time-range-2019-08))
+    (should
+     (equal
+      (retrospect-time-range-month 8 2018 current-time)
+      time-range-2018-08))
+    (should
+     (equal
+      (retrospect-time-range-month nil 2018 current-time)
+      time-range-2018-10))
+    (should
+     (equal
+      (retrospect-time-range-month-with-offset -2 current-time)
+      time-range-2019-08))
+    (should
+     (equal
+      (retrospect-time-range-month-with-offset -14 current-time)
+      time-range-2018-08))))
 
 (defun run-interactive (input)
   "Run `retrospect' in interactive mode on test file INPUT.org."

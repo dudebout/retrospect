@@ -19,7 +19,7 @@ melpaBuild {
     org-plus-contrib
   ];
   meta = {
-      homepage = https://github.com/dudebout/retrospect;
-      license = stdenv.lib.licenses.gpl3;
+    homepage = https://github.com/dudebout/retrospect;
+    license = stdenv.lib.licenses.gpl3;
   };
 }

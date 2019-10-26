@@ -5,7 +5,7 @@
 ;; Author: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Maintainer: Nicolas Dudebout <nicolas.dudebout@gmail.com>
 ;; Created: 23 Feb 2018
-;; Modified: 09 Sep 2019
+;; Modified: 26 Oct 2019
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "26.1") (org "9.2") (dash "2.14"))
 ;; Keywords: org-mode retrospective time-management
@@ -61,9 +61,14 @@ symbol for the org entry at point."
   :group 'retrospect)
 
 (defcustom retrospect-time-range nil
-  "Time range to be analyzed."
-  :type '(plist :options ((:tstart string)
-                          (:tend string)))
+  "Time range to be analyzed.
+
+If `retrospect-time-range' is a function, it should return a time
+range.  This function is run before each invocation of
+`retrospect'."
+  :type '(choice ((plist :options ((:tstart string)
+                                   (:tend string)))
+                  (function)))
   :group 'retrospect)
 
 (defcustom retrospect-summary-transfers nil
@@ -289,9 +294,12 @@ buffer setup by a call to `retrospect'."
 (defun retrospect--compute-buckets-content ()
   "Compute buckets content."
   (with-current-buffer (find-file-noselect retrospect-source-filename)
-    (retrospect--compute-logged-durations
-     (plist-get retrospect-time-range :tstart)
-     (plist-get retrospect-time-range :tend))))
+    (let ((time-range (if (functionp retrospect-time-range)
+                          (funcall retrospect-time-range)
+                        retrospect-time-range)))
+      (retrospect--compute-logged-durations
+       (plist-get time-range :tstart)
+       (plist-get time-range :tend)))))
 
 (defun retrospect--redraw-buffer ()
   "Erase the *retrospect* buffer and display buckets content."
@@ -383,6 +391,40 @@ If the entry at point does not have a `bucket` property, return nil."
   (let ((bucket-property (org-entry-get (point) retrospect-bucket-property-name t)))
     (when bucket-property
         (intern bucket-property))))
+
+(defun retrospect-time-range-month (&optional month year time)
+  "Time range for the current month.
+
+The optional MONTH should be an integer corresponding to a month
+in the Gregorian calendar.  When set, return the time range for
+that month, instead of the current one.
+
+The optional YEAR should be an integer corresponding to a year in
+the Gregorian calendar.  When set, return a time range in that
+year.
+
+The optional TIME should be in the format returned by
+`current-time'."
+  (let* ((time (or time (decode-time (current-time))))
+         (month (or month (nth 4 time)))
+         (year (or year (nth 5 time)))
+         (start-time (encode-time 0 0 0 1 month year))
+         (end-time (encode-time 0 0 0 1 (+ 1 month) year)))
+    (list :tstart (format-time-string "%Y-%m-%d" start-time)
+          :tend (format-time-string "%Y-%m-%d" end-time))))
+
+(defun retrospect-time-range-month-with-offset (offset &optional time)
+  "Time range for the month OFFSET away from the current one.
+
+The OFFSET is positive for future months, and negative for past
+ones.
+
+The optional TIME should be in the format returned by
+`current-time'."
+  (let* ((time (or time (decode-time (current-time))))
+         (current-month (nth 4 time))
+         (month (+ offset current-month)))
+    (retrospect-time-range-month month nil time)))
 
 (provide 'retrospect)
 

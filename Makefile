@@ -1,7 +1,9 @@
 emacs = emacs -Q
-EMACSLOADPATH ?= $(shell emacs -Q --batch --eval '(message (if (locate-library "retrospect") "" "."))' 2>&1)
-ifneq (,$(EMACSLOADPATH))
-export EMACSLOADPATH
+
+# The following ensures that the retrospect.el in the current directory is used
+# to run tests outside of nix-shell.
+ifndef IN_NIX_SHELL
+export EMACSLOADPATH=.
 endif
 
 .PHONY: all
