@@ -4,7 +4,7 @@ jobs:
   include:
     - name: nixpkgs-unstable
       env: NIX_PATH=nixpkgs=https://nixos.org/channels/nixpkgs-unstable/nixexprs.tar.xz
-    - name: nixos-19.03
-      env: NIX_PATH=nixpkgs=https://nixos.org/channels/nixos-19.03/nixexprs.tar.xz
+    - name: nixos-19.09
+      env: NIX_PATH=nixpkgs=https://nixos.org/channels/nixos-19.09/nixexprs.tar.xz
 
 script: nix-shell --run 'make test'
