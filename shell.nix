@@ -1,9 +1,9 @@
-{ nixpkgs ? <nixpkgs> }:
+{ pkgs ? import <nixpkgs> {} }:
 
-with (import nixpkgs {});
+with pkgs;
 
 let
-  retrospect = import ./. { inherit nixpkgs; };
+  retrospect = import ./. { inherit pkgs; };
 in
   mkShell {
     buildInputs = [ (emacsPackagesNg.emacsWithPackages retrospect) ];
