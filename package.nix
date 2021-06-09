@@ -1,4 +1,5 @@
 { stdenv
+, lib
 , melpaBuild
 , dash
 , org-plus-contrib
@@ -20,6 +21,6 @@ melpaBuild {
   ];
   meta = {
     homepage = https://github.com/dudebout/retrospect;
-    license = stdenv.lib.licenses.gpl3;
+    license = lib.licenses.gpl3;
   };
 }
