@@ -1,11 +1,11 @@
 { stdenv
 , lib
-, melpaBuild
+, trivialBuild
 , dash
 , org
 }:
 
-melpaBuild {
+trivialBuild {
   pname = "retrospect";
   ename = "retrospect";
   version = "0.1";
