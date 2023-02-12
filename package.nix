@@ -2,7 +2,7 @@
 , lib
 , melpaBuild
 , dash
-, org-plus-contrib
+, org
 }:
 
 melpaBuild {
@@ -17,7 +17,7 @@ melpaBuild {
   '';
   packageRequires = [
     dash
-    org-plus-contrib
+    org
   ];
   meta = {
     homepage = https://github.com/dudebout/retrospect;

@@ -4,5 +4,5 @@ with pkgs;
 
 callPackage (import ./package.nix) {
   inherit stdenv;
-  inherit (emacsPackagesNg) melpaBuild dash org-plus-contrib;
+  inherit (emacsPackagesNg) melpaBuild dash org;
 }
