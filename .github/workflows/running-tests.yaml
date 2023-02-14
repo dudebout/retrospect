@@ -1,0 +1,19 @@
+name: "Running Tests"
+on:
+  push:
+  schedule:
+  - cron: '42 2 * * 5' # 2:42am on Fridays
+jobs:
+  Run:
+    strategy:
+      matrix:
+        nixpkgs_channel:
+        - nixpkgs-unstable
+        - nixos-22.11
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: cachix/install-nix-action@v19
+      with:
+        nix_path: nixpkgs=channel:${{ matrix.nixpkgs_channel }}
+    - run: nix develop --command make test
