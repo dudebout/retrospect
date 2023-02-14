@@ -3,7 +3,7 @@ emacs = emacs -Q
 # The following ensures that the retrospect.el in the current directory is used
 # to run tests outside of nix-shell.
 ifndef IN_NIX_SHELL
-export EMACSLOADPATH=.
+export EMACSLOADPATH=.:
 endif
 
 .PHONY: all
